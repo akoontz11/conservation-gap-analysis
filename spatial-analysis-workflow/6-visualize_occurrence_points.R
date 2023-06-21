@@ -58,7 +58,7 @@ rm(my.packages)
 
 # use 0-set_working_directory.R script:
   # update to your path
-source("/Users/emily/Documents/GitHub/conservation-gap-analysis/spatial-analysis-workflow/0-set_working_directory.R")
+source("/home/akoontz/Documents/gapAnalysisTraining/conservation-gap-analysis/spatial-analysis-workflow/0-set_working_directory.R")
 
 # create folder for output data
 data_out <- "visualize_taxon_points"
