@@ -324,6 +324,7 @@ table(geo_pts$database)
 # country name to 3 letter ISO code
   # fix some issues first (can add anything that is not matched unambiguously in
   # the 'find codes for names' step directly below; then rerun from here)
+  # AK: generates "Error in `$<-.data.frame`(`*tmp*`, country, value = character(0)):replacement has 0 rows, data has 91`
 geo_pts$country <- mgsub(geo_pts$country,
     c("brasil","EE. UU.","estados unidos","estados unidos de america",
       "méxico","México"),#matched unambiguously
