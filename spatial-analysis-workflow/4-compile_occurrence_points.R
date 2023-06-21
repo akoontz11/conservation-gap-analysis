@@ -62,6 +62,7 @@ my.packages <- c('tidyverse','textclean','CoordinateCleaner','terra','countrycod
 lapply(my.packages, require, character.only=TRUE)
 rm(my.packages)
 
+# be extra sure we are using dplyr when we mean to
 select <- dplyr::select
 filter <- dplyr::filter
 mutate <- dplyr::mutate
@@ -273,7 +274,7 @@ no_coord <- anti_join(all_data,have_coord)
   #   1-prep_gis_layers.R instead of the 10m layer
 pts_spatial <- terra::intersect(pts_spatial,world_ctry)
   # if the following two lines are not zero, you should look at script
-  #  1-prep_gis_layers.R and fill in an additional missing code
+  #  1-prep_gis_layers.R and fill in an additional missing code(s)
 nrow(pts_spatial[which(is.na(pts_spatial$iso_a2)),])
 nrow(pts_spatial[which(pts_spatial$iso_a2=="-99"),])
   # bring all the data back together and flag water points
@@ -433,8 +434,8 @@ geo_pts <- geo_pts %>% arrange(desc(year))
       #   herbariun specimen, which experts can use to review the record
 unique(geo_pts$database)
 geo_pts$database <- factor(geo_pts$database,
-  levels = c("GBIF","iDigBio","IUCN_RedList","NorthAm_herbaria",
-             "FIA","BIEN","Ex_situ"))
+  levels = c("NorthAm_herbaria","iDigBio","GBIF","FIA","IUCN_RedList",
+             "BIEN","Ex_situ"))
 geo_pts <- geo_pts %>% arrange(database)
 
 ## remove duplicates --
@@ -513,7 +514,7 @@ write.csv(summary, file.path(main_dir,occ_dir,standardized_occ,
   paste0("summary_of_occurrences_", Sys.Date(), ".csv")),row.names = F)
 
 ################################################################################
-# Split by species to save
+# Split by taxa to save
 ################################################################################
 
 # split records to create one CSV for each target taxon
