@@ -3,9 +3,10 @@
 ### Supporting institutions: The Morton Arboretum, Botanic Gardens Conservation 
 #   International-US, United States Botanic Garden, San Diego Botanic Garden,
 #   Missouri Botanical Garden
-### Funding: Funded by a cooperative agreement between the United States 
-#   Botanic Garden and San Diego Botanic Garden (subcontracted to The Morton
-#   Arboretum), and NSF ABI grant #1759759
+### Funding: 
+#   -- United States Botanic Garden (cooperative agreement with San Diego
+#        Botanic Garden)
+#   -- NSF (award 1759759 to The Morton Arboretum)
 ### Last Updated: June 2023
 ### R version 4.3.0
 
@@ -14,6 +15,12 @@
   #   columns (added in 5-flag_occurrence_points.R) you choose to use, and any
   #   manual edits provided through the manual_point_edits.R file (see INPUTS
   #   below for details).
+  ## Note that currently the same flagging columns are used for every target 
+  #   taxon; this makes it easier from a methods standpoint. But, if you want
+  #   to use different flagging columns for different taxa, the script could
+  #   be edited to do so. One option for this would be adding a column to the 
+  #   manual_point_edits.csv that lists the filters you want to use... not a
+  #   super simple or quick solution though.
 
 ### INPUTS:
   ## taxon_points_ready-to-vet (folder) 
@@ -43,9 +50,9 @@
   #         separated by a semicolon.
   
 ### OUTPUTS:
-  ## final_taxon_points (folder)
+  ## taxon_points_final (folder)
   #   For each taxon in your target taxa list, a CSV of filtered occurrence 
-  #   records (e.g., Asimina_triloba__YYYY_MM_DD.csv)
+  #   records (e.g., Asimina_triloba.csv)
 
 ################################################################################
 # Load libraries
@@ -86,8 +93,9 @@ manual_edits <- read.csv(file.path(main_dir,occ_dir,standardized_occ,
                        header=T, colClasses="character", na.strings=c("","NA"))
 # remove all spaces in the manual edits, to standardize in case manual mistakes
 manual_edits <- manual_edits %>%
-  mutate(across(remove_id:remove_bounding_box, ~
+  mutate(across(remove_id:keep_id, ~
                   str_remove_all(.x, pattern = fixed(" "))))
+manual_edits
 
 # list of taxon files to iterate through
 taxon_files <- list.files(path=file.path(main_dir,occ_dir,standardized_occ,data_in), 
@@ -96,6 +104,7 @@ target_taxa <- file_path_sans_ext(taxon_files)
 
 # start a table to add summary of results for each species
 summary_tbl <- data.frame(taxon_name_accepted = "start", final_pts = "start")
+
 
 # cycle through each target taxon to remove flagged points and save new version
 for (i in 1:length(target_taxa)){
@@ -110,18 +119,9 @@ for (i in 1:length(target_taxa)){
   taxon_now <- read.csv(file.path(main_dir,occ_dir,standardized_occ,data_in,
                                   paste0(taxon_file, ".csv")))
   orig_num_pts <- nrow(taxon_now)
+  # make sure all the T/F columns are logical type
+  taxon_now <- taxon_now %>% mutate(across(.cen:.yrna, as.logical))
   
-  ## first make sure all the T/F columns are logical type
-  taxon_now <- taxon_now %>%
-    mutate(.cen = as.logical(.cen),
-           .urb = as.logical(.urb),
-           .inst = as.logical(.inst),
-           .con = as.logical(.con),
-           .outl = as.logical(.outl),
-           .nativectry = as.logical(.nativectry),
-           .yr1950 = as.logical(.yr1950),
-           .yr1980 = as.logical(.yr1980),
-           .yrna = as.logical(.yrna))
   
   ## filter occurrence data based on filter columns created in 5-flag_occurrence_points.R
   taxon_now <- taxon_now %>%
@@ -150,6 +150,7 @@ for (i in 1:length(target_taxa)){
         ))
   cat(paste0("--Removed ",orig_num_pts-nrow(taxon_now)," points based on flagging colums\n"))
   
+  
   ## check document with manual point edits to see if anything needs to be
   ##    removed or added back in
   # get manual edits row for the current target taxon
@@ -168,7 +169,7 @@ for (i in 1:length(target_taxa)){
       bounds <- unlist(strsplit(boxes[j],","))
       # note that if your bounding box crosses longitude 180/-180, which is near
       #   the international date line, then the longitude comparison here won't 
-      #   work! - the filter would need to be edited a little to catch that exceptoin
+      #   work! - the filter would need to be edited to catch that exception
       remove <- taxon_now %>%
         filter(decimalLatitude < as.numeric(bounds[1]) & 
                decimalLongitude > as.numeric(bounds[2]) &
@@ -208,6 +209,8 @@ for (i in 1:length(target_taxa)){
 file_nm <- list.files(path = file.path(main_dir,occ_dir,standardized_occ),
                       pattern = "summary_of_occurrences", full.names = T)
 orig_summary <- read.csv(file_nm, colClasses = "character")
+  # keep just the columns from script 5 output, in case you're running this script a second time
+orig_summary <- orig_summary %>% select(taxon_name_accepted:.yrna)
 summary_tbl2 <- full_join(orig_summary,summary_tbl,by="taxon_name_accepted")
 summary_tbl2
 
